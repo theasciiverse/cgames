@@ -24,7 +24,7 @@ OBJS = cblocks.o movelist.o parse.o fileread.o answers.o play.o dirio.o userio.o
 cblocks: $(OBJS)
 
 clean:
-	rm -f $(OBJS) cblocks
+	rm -f $(OBJS) cblocks Makefile
 
 install: cblocks
 	install -d $(bindir)

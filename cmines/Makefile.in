@@ -23,7 +23,7 @@ OBJS = cmines.o userio.o
 cmines: $(OBJS)
 
 clean:
-	rm -f $(OBJS) cmines
+	rm -f $(OBJS) cmines Makefile
 
 install: cmines
 	install -d $(bindir)

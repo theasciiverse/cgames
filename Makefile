@@ -2,7 +2,9 @@
 
 all: csokoban-build cmines-build cblocks-build
 install: csokoban-install cmines-install cblocks-install
+
 clean: csokoban-clean cmines-clean cblocks-clean
+	rm -f config.cache config.log config.status
 
 csokoban: csokoban-build csokoban-install
 cmines: cmines-build cmines-install

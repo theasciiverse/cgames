@@ -1,9 +1,9 @@
 12 Nov 2000: version 2.2
 
 * Created a ./configure script and a top-level Makefile.
-* Added the option to permit building without gpm (after a suggestion
-  by Ben Olmstead <bem@madscientist.com>).
-* Modified the keyboard interface to cblocks.
+* Added the option to permit building without gpm.
+* Modified the keyboard interface to cblocks (after a suggestion by
+  Ben Olmstead <bem@madscientist.com>).
 * Added the 'S' command to csokoban.
 * Modified the cblocks -w feature's output format.
 * Minor documentation bugfixes.
