@@ -1,16 +1,23 @@
-# Edit these to suit your preferences.
 #
-prefix = /usr/local
-datadir = $(prefix)/share/cblocks
+# Useful ./configure options with respect to this Makefile:
+# --prefix
+# --exec_prefix
+# --bindir
+# --datadir
+# --mandir
+# --with-ncurses
+# --disable-mouse
 
-CC = gcc
-CFLAGS = -Wall -O '-DDATADIR="$(datadir)"'
-LDFLAGS = -Wall -O -s
-LOADLIBES = -lgpm
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+datadir = @datadir@/cblocks
+mandir = @mandir@
 
-# Uncomment this line to build the curses-based version.
-#
-#LOADLIBES += -lncurses
+CC = @CC@
+CFLAGS =@CFLAGS@@MOUSEFLAGS@ '-DDATADIR="$(datadir)"'
+LDFLAGS =@LDFLAGS@
+LOADLIBES =@LOADLIBES@@MOUSELIBS@
 
 OBJS = cblocks.o movelist.o parse.o fileread.o answers.o play.o dirio.o userio.o
 
@@ -20,10 +27,10 @@ clean:
 	rm -f $(OBJS) cblocks
 
 install: cblocks
-	install -d $(prefix)/games
-	install -c ./cblocks $(prefix)/games/cblocks
-	install -d $(prefix)/man/man6
-	install -c ./cblocks.6 $(prefix)/man/man6/cblocks.6
+	install -d $(bindir)
+	install -c ./cblocks $(bindir)/cblocks
+	install -d $(mandir)/man6
+	install -c ./cblocks.6 $(mandir)/man6/cblocks.6
 	install -d -g games $(datadir)
 	install -c ./series/* $(datadir)/
 

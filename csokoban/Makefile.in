@@ -1,16 +1,22 @@
-# Edit these to suit your preferences.
 #
-prefix = /usr/local
-datadir = $(prefix)/share/csokoban
+# Useful ./configure options with respect to this Makefile:
+# --prefix
+# --exec_prefix
+# --bindir
+# --datadir
+# --mandir
+# --with-ncurses
 
-CC = gcc
-CFLAGS = -Wall -O '-DDATADIR="$(datadir)"'
-LDFLAGS = -Wall -O -s
-LOADLIBES =
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+datadir = @datadir@/csokoban
+mandir = @mandir@
 
-# Uncomment this line to build the curses-based version.
-#
-#LOADLIBES += -lncurses
+CC = @CC@
+CFLAGS =@CFLAGS@ '-DDATADIR="$(datadir)"'
+LDFLAGS =@LDFLAGS@
+LOADLIBES =@LOADLIBES@
 
 OBJS = csokoban.o movelist.o fileread.o answers.o play.o dirio.o userio.o
 
@@ -20,10 +26,10 @@ clean:
 	rm -f $(OBJS) csokoban
 
 install: csokoban
-	install -d $(prefix)/games
-	install -c ./csokoban $(prefix)/games/csokoban
-	install -d $(prefix)/man/man6
-	install -c ./csokoban.6 $(prefix)/man/man6/csokoban.6
+	install -d $(bindir)
+	install -c ./csokoban $(bindir)/csokoban
+	install -d $(mandir)/man6
+	install -c ./csokoban.6 $(mandir)/man6/csokoban.6
 	install -d -g games $(datadir)
 	install -c ./series/* $(datadir)/
 
