@@ -127,7 +127,7 @@ static Gpm_Connect	gpmconnection;
 /* The indexes of the characters in the font that will be replaced
  * with images for displaying various parts of objects.
  */
-static unsigned char const linechars[][2] = {
+static char const linechars[][2] = {
     { 203, 211 },	/* left side extends N S W, right side extends N S E */
     { 204, 212 },	/* left side extends S W, right side extends S E */
     { 205, 213 },	/* left side extends N W, right side extends N E */
@@ -141,7 +141,7 @@ static unsigned char const linechars[][2] = {
 /* The indexes of the character pairs used to display a cell
  * containing some kind of object.
  */
-static unsigned char const linecells[][2] = {
+static char const linecells[][2] = {
     { 210, 190 },	/* isolated object */
     { 209, 189 },	/* object extends N */
     { 210, 206 },	/* object extends E */
@@ -279,7 +279,7 @@ static int setfontdata(char *chardata)
  * to one scanline of left and right. The character 0 turns a pixel
  * off, 1 turns a pixel on, and space leaves the pixel unchanged.
  */
-static void imprint(unsigned char *left, unsigned char *right,
+static void imprint(char *left, char *right,
 		    char const (*image)[16], int height)
 {
     int	off, on, i, j;
@@ -312,7 +312,7 @@ static void imprint(unsigned char *left, unsigned char *right,
  * in chardata. The wallchars array contains the actual character
  * indexes that are used.
  */
-static void makewalls(unsigned char *chardata)
+static void makewalls(char *chardata)
 {
     static char const walltop[4][2][16] = {
 	{ "1000000000000011",
@@ -338,7 +338,7 @@ static void makewalls(unsigned char *chardata)
 	{ "1111111111111110",
 	  "1000000000000001" }
     };
-    unsigned char      *left, *right;
+    char      *left, *right;
     int			i, j, k;
 
     for (i = 0 ; i < 2 ; ++i) {
@@ -515,6 +515,18 @@ static void maptogrid(short screengrid[MAXHEIGHT][MAXWIDTH],
     }
 }
 
+/* Display two characters directly from the current console font. The
+ * user-defined Unicode area U+F000 to U+F0FF is defined on the Linux
+ * console to map directly to the current font character. The function
+ * handles the conversion to UTF-8.
+ */
+static void outpair(char const pair[2])
+{
+    out("\xEF%c%c\xEF%c%c",
+	0x80 | ((unsigned char)pair[0] >> 6), 0x80 | (pair[0] & 0x3F),
+	0x80 | ((unsigned char)pair[1] >> 6), 0x80 | (pair[1] & 0x3F));
+}
+
 /* Display the game state on the console. The map is placed in the
  * upper left corner, and the textual information appears in the upper
  * right corner.
@@ -528,7 +540,7 @@ int displaygame(cell const *map, int ysize, int xsize,
     static char const  *levelstr[] = { "22", "1", "2" };
     static short	screengrid[MAXHEIGHT][MAXWIDTH];
     char		buf[SIDEBARWIDTH + 1];
-    unsigned short     *p;
+    short	       *p;
     int			done;
     int			attr, lastattr;
     int			nameindex = 0;
@@ -549,7 +561,6 @@ int displaygame(cell const *map, int ysize, int xsize,
 	if (y)
 	    out("\n");
 	if (y < ysize) {
-	    out("\033(K");
 	    lastattr = 0;
 	    for (x = 0 ; x < xsize ; ++x) {
 		attr = screengrid[y][x] & ~ATTR_SHAPE;
@@ -564,10 +575,9 @@ int displaygame(cell const *map, int ysize, int xsize,
 					    '0' + attr_bgcolor(attr));
 		    lastattr = attr;
 		}
-		out("%c%c", linecells[screengrid[y][x] & ATTR_SHAPE][0],
-			    linecells[screengrid[y][x] & ATTR_SHAPE][1]);
+		outpair(linecells[screengrid[y][x] & ATTR_SHAPE]);
 	    }
-	    out("\033[22;39;49m\033(B");
+	    out("\033[22;39;49m");
 	} else {
 	    x = 0;
 	    done |= DONE_MAP;
@@ -670,10 +680,10 @@ void displayhelp(char const *keys[], int keycount)
     n = keywidth + descwidth + 2;
     if (n < 4)
 	n = 4;
-    out("%*s\033[K\n\033(0", n / 2 + 2, "Keys");
+    out("%*s\033[K\n", n / 2 + 2, "Keys");
     for (i = 0 ; i < n ; ++i)
-	out("q");
-    out("\033(B\033[K\n");
+	out("\xE2\x94\x80");
+    out("\033[K\n");
     for (i = 0 ; i < keycount ; ++i) {
 	n = strlen(keys[i]);
 	out("%-*s  %-*s\033[K\n", keywidth, keys[i],
