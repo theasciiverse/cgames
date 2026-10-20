@@ -35,13 +35,15 @@ out/$(1)$(EXE): $$($(1)_OBJS)
 	$$(CC) $$(LDFLAGS) -o $$@ $$($(1)_OBJS) $$(CURSES_LIBS)
 $(BUILD)/$(1)/paths.o: asciiverse/paths.c asciiverse/paths.h
 	@mkdir -p $$(dir $$@)
-	$$(CC) $$(CFLAGS) $$(CPPFLAGS) $$(DEFS) -c -o $$@ $$<
+	$$(CC) $$(CFLAGS) $$(CPPFLAGS) $$(DEFS) -MMD -MP -c -o $$@ $$<
 endef
 $(foreach g,$(GAMES),$(eval $(call game,$(g))))
 
 $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) -MMD -MP -c -o $@ $<
+
+-include $(shell find $(BUILD) -name '*.d' 2>/dev/null)
 
 clean:
 	rm -rf $(BUILD) out
