@@ -12,6 +12,10 @@
 #include	<errno.h>
 #include	<getopt.h>
 #include	"cmines.h"
+#ifdef AV_PATHS
+#include	<sys/stat.h>
+#include	"paths.h"
+#endif
 #include	"userio.h"
 
 /* When allocation fails.
@@ -701,6 +705,25 @@ static void initwithcmdline(int argc, char *argv[], startupdata *start)
 	start->setupname = argv[optind++];
     if (optind < argc)
 	die("invalid command-line syntax -- %s", argv[optind]);
+#ifdef AV_PATHS
+    /* cminesrc in the player's data folder, unless ~/.cminesrc is there */
+    if (!setupfile) {
+	char const     *home = getenv("HOME");
+	char		dir[4096];
+	struct stat	st;
+
+	if (home && *home) {
+	    char       *old = makepathname(home, ".cminesrc");
+
+	    if (stat(old, &st))
+		free(old);
+	    else
+		setupfile = old;
+	}
+	if (!setupfile && av_playerdir(dir, sizeof dir, "cmines", NULL))
+	    setupfile = makepathname(dir, "cminesrc");
+    }
+#endif
     if (!setupfile)
 	setupfile = makepathname(getenv("HOME"), ".cminesrc");
 }

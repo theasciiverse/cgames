@@ -10,6 +10,9 @@
 #include	<ctype.h>
 #include	<getopt.h>
 #include	"gen.h"
+#ifdef AV_PATHS
+#include	"paths.h"
+#endif
 #include	"csokoban.h"
 #include	"movelist.h"
 #include	"dirio.h"
@@ -345,12 +348,22 @@ static void initwithcmdline(int argc, char *argv[], startupdata *start)
     pathlen = getpathbufferlength();
     datadir = getpathbuffer();
     copypath(datadir, DATADIR);
+#ifdef AV_PATHS
+    /* the levels in series/ beside the program, if they are there */
+    av_besideexe(datadir, pathlen, "series");
+#endif
 
     savedir = getpathbuffer();
     if ((dir = getenv("SOKSAVEDIR"))) {
 	strncpy(savedir, dir, pathlen - 1);
 	savedir[pathlen - 1] = '\0';
-    } else if ((dir = getenv("HOME")))
+    }
+#ifdef AV_PATHS
+    /* the player's data folder, or ~/.csokoban if it is there */
+    else if (av_playerdir(savedir, pathlen, "csokoban", ".csokoban"))
+	;
+#endif
+    else if ((dir = getenv("HOME")))
 	sprintf(savedir, "%.*s/.csokoban", pathlen - 11, dir);
 
     start->filename = getpathbuffer();

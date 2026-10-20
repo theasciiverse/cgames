@@ -10,6 +10,9 @@
 #include	<ctype.h>
 #include	<getopt.h>
 #include	"gen.h"
+#ifdef AV_PATHS
+#include	"paths.h"
+#endif
 #include	"cblocks.h"
 #include	"movelist.h"
 #include	"dirio.h"
@@ -344,12 +347,22 @@ static void initwithcmdline(int argc, char *argv[], startupdata *start)
 
     datadir = getpathbuffer();
     copypath(datadir, DATADIR);
+#ifdef AV_PATHS
+    /* the levels in series/ beside the program, if they are there */
+    av_besideexe(datadir, pathlen, "series");
+#endif
 
     savedir = getpathbuffer();
     if ((dir = getenv("BLKSAVEDIR"))) {
 	strncpy(savedir, dir, pathlen - 1);
 	savedir[pathlen - 1] = '\0';
-    } else if ((dir = getenv("HOME")))
+    }
+#ifdef AV_PATHS
+    /* the player's data folder, or ~/.cblocks if it is there */
+    else if (av_playerdir(savedir, pathlen, "cblocks", ".cblocks"))
+	;
+#endif
+    else if ((dir = getenv("HOME")))
 	sprintf(savedir, "%.*s/.cblocks", pathlen - 10, dir);
 
     start->filename = null;
