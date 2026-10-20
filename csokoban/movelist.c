@@ -55,7 +55,8 @@ void copymovelist(dyxlist *to, dyxlist const *from)
     to->list = NULL;
     initmovelist(to);
     setmovelist(to, from->count);
-    memcpy(to->list, from->list, from->count * sizeof *from->list);
+    if (from->count)
+	memcpy(to->list, from->list, from->count * sizeof *from->list);
 }
 
 /* Deallocate list.
