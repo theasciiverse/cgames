@@ -428,6 +428,7 @@ int ioinitialize(int silenceflag)
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
+    curs_set(0);
     selectrepresentation();
     return TRUE;
 }
