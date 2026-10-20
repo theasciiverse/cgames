@@ -45,6 +45,53 @@ static int		sidebar;
  */
 static int		silence = FALSE;
 
+/* The screen row and column of the map's top left corner.
+ */
+static int		oy, ox;
+
+/* The fewest rows the map and sidebar take together, so the sidebar
+ * has room for its text and the closing message.
+ */
+#define	MINHEIGHT	16
+
+/* What is on the screen, to draw again when the terminal is resized:
+ * the game (with its closing message or not) or the help.
+ */
+static enum { SHOWING_NOTHING, SHOWING_GAME, SHOWING_HELP } showing;
+static struct {
+    cell const *map;
+    int		ysize, xsize;
+    char const *seriesname, *levelname;
+    int		index;
+    char const *colors;
+    int		currblock, ycursor, xcursor, saves, movecount, stepcount;
+    int		beststepcount, bestmovecount, beststepknown;
+} lastgame;
+static int		endmessage;
+static char const     **lastkeys;
+static int		lastkeycount;
+
+/* Work out where a map of the given size (in screen rows and columns)
+ * and the sidebar go: centred together on the screen. Return FALSE if
+ * they do not fit.
+ */
+static int placegame(int rows, int cols)
+{
+    int	h, w;
+
+    w = cols + 2 + SIDEBARWIDTH;
+    if (rows > LINES || w > COLS)
+	return FALSE;
+    h = rows > MINHEIGHT ? rows : MINHEIGHT;
+    if (h > LINES)
+	h = LINES;
+    oy = (LINES - h) / 2;
+    ox = (COLS - w) / 2;
+    sidebar = ox + cols + 2;
+    lastline = oy + h - 1;
+    return TRUE;
+}
+
 /* The name of the program and the file currently being accessed,
  * for use in error messages (declared in gen.h).
  */
@@ -184,9 +231,28 @@ int displaygame(cell const *map, int ysize, int xsize,
     int		ext;
     int		y, x, n;
 
+    showing = SHOWING_GAME;
+    endmessage = -1;
+    lastgame.map = map;
+    lastgame.ysize = ysize;
+    lastgame.xsize = xsize;
+    lastgame.seriesname = seriesname;
+    lastgame.levelname = levelname;
+    lastgame.index = index;
+    lastgame.colors = colors;
+    lastgame.currblock = currblock;
+    lastgame.ycursor = ycursor;
+    lastgame.xcursor = xcursor;
+    lastgame.saves = saves;
+    lastgame.movecount = movecount;
+    lastgame.stepcount = stepcount;
+    lastgame.beststepcount = beststepcount;
+    lastgame.bestmovecount = bestmovecount;
+    lastgame.beststepknown = beststepknown;
+
     erase();
 
-    if (ysize > fieldheight || xsize > fieldwidth) {
+    if (!placegame(ysize * 2, xsize * 4)) {
 	mvprintw(0, 0, "Level %d won't fit on the screen.", index);
 	refresh();
 	return FALSE;
@@ -218,29 +284,29 @@ int displaygame(cell const *map, int ysize, int xsize,
 			       FEXTENDSOUTH | FEXTENDWEST)) >> 4;
 	    }
 	    if (attr != A_INVIS)
-		drawcell(y * 2, x * 4, ext, attr);
+		drawcell(oy + y * 2, ox + x * 4, ext, attr);
 	}
     }
 
     sprintf(buf, "# %d", index);
-    mvprintw(0, sidebar, "%*s", SIDEBARWIDTH, buf);
-    mvprintw(1, sidebar, "Steps: %d", stepcount);
-    mvprintw(2, sidebar, "Moves: %d", movecount);
+    mvprintw(oy, sidebar, "%*s", SIDEBARWIDTH, buf);
+    mvprintw(oy + 1, sidebar, "Steps: %d", stepcount);
+    mvprintw(oy + 2, sidebar, "Moves: %d", movecount);
     if (beststepknown)
-	mvprintw(3, sidebar, " Min.: %d steps", beststepknown);
+	mvprintw(oy + 3, sidebar, " Min.: %d steps", beststepknown);
     if (beststepcount) {
-	mvprintw(4, sidebar, " Best: %d", beststepcount);
+	mvprintw(oy + 4, sidebar, " Best: %d", beststepcount);
 	if (beststepcount < 100000)
 	    addstr(" steps");
 	if (bestmovecount) {
 	    if (bestmovecount < 100000)
-		mvprintw(5, sidebar + 7, "%d moves", bestmovecount);
+		mvprintw(oy + 5, sidebar + 7, "%d moves", bestmovecount);
 	    else
-		mvprintw(5, sidebar + 4, "%8d moves", bestmovecount);
+		mvprintw(oy + 5, sidebar + 4, "%8d moves", bestmovecount);
 	}
     }
 
-    y = 7;
+    y = oy + 7;
     if (seriesname) {
 	for (n = 0 ; seriesname[n] && y <= lastline ; ++y) {
 	    move(y, sidebar);
@@ -256,7 +322,7 @@ int displaygame(cell const *map, int ysize, int xsize,
     }
 
     if (ycursor && xcursor)
-	move(ycursor * 2, xcursor * 4 + 1);
+	move(oy + ycursor * 2, ox + xcursor * 4 + 1);
     else
 	move(lastline, sidebar + SIDEBARWIDTH - 1);
 
@@ -285,20 +351,31 @@ void displayhelp(char const *keys[], int keycount)
 	    descwidth = n;
     }
 
+    showing = SHOWING_HELP;
+    lastkeys = keys;
+    lastkeycount = keycount;
+
     erase();
     n = keywidth + descwidth + 2;
     if (n < 4)
 	n = 4;
-    mvaddstr(0, n / 2 + 2, "Keys");
+    /* the help, centred */
+    oy = (LINES - (keycount + 4)) / 2;
+    ox = (COLS - (n > 24 ? n : 24)) / 2;
+    if (oy < 0)
+	oy = 0;
+    if (ox < 0)
+	ox = 0;
+    mvaddstr(oy, ox + n / 2 + 2, "Keys");
     for (i = 0 ; i < n ; ++i)
-	mvaddch(1, i, ACS_HLINE);
+	mvaddch(oy + 1, ox + i, ACS_HLINE);
     for (i = 0 ; i < keycount ; ++i) {
 	n = strlen(keys[i]);
-	mvaddstr(i + 2, 0, keys[i]);
-	mvaddstr(i + 2, keywidth + 2, keys[i] + n + 1);
+	mvaddstr(oy + i + 2, ox, keys[i]);
+	mvaddstr(oy + i + 2, ox + keywidth + 2, keys[i] + n + 1);
     }
 
-    mvaddstr(lastline, 0, "Press any key to return.");
+    mvaddstr(oy + keycount + 3, ox, "Press any key to return.");
     refresh();
     clearok(stdscr, TRUE);
 }
@@ -308,6 +385,7 @@ void displayhelp(char const *keys[], int keycount)
  */
 void displayendmessage(int endofseries)
 {
+    endmessage = endofseries;
     mvaddstr(lastline - 1, sidebar + 1, "Press ENTER");
     mvaddstr(lastline, sidebar + 1, endofseries ? "  to exit  "
 						: "to continue");
@@ -338,17 +416,46 @@ static int mousehandler(void)
     else
 	return 0;
 
-    return mousecallback(event.y / 2, event.x / 4, state);
+    if (event.y < oy || event.x < ox)
+	return 0;
+    return mousecallback((event.y - oy) / 2, (event.x - ox) / 4, state);
 }
 
 /* Retrieve and return a single keystroke. Arrow keys and other inputs
  * are translated into ASCII equivalents.
  */
+/* Draw the screen again for a resized terminal.
+ */
+static void redrawresized(void)
+{
+    if (showing == SHOWING_GAME) {
+	int	end = endmessage;
+
+	displaygame(lastgame.map, lastgame.ysize, lastgame.xsize,
+		    lastgame.seriesname, lastgame.levelname, lastgame.index,
+		    lastgame.colors, lastgame.currblock, lastgame.ycursor,
+		    lastgame.xcursor, lastgame.saves, lastgame.movecount,
+		    lastgame.stepcount, lastgame.beststepcount,
+		    lastgame.bestmovecount, lastgame.beststepknown);
+	if (end >= 0)
+	    displayendmessage(end);
+    } else if (showing == SHOWING_HELP)
+	displayhelp(lastkeys, lastkeycount);
+}
+
 int input(void)
 {
     for (;;) {
 	int key = getch();
 	switch (key) {
+#ifdef KEY_RESIZE
+	  case KEY_RESIZE:
+#ifdef PDCURSES
+	    resize_term(0, 0);
+#endif
+	    redrawresized();
+	    continue;
+#endif
 	  case KEY_UP:		return ARROW_N;
 	  case KEY_DOWN:	return ARROW_S;
 	  case KEY_LEFT:	return ARROW_W;
