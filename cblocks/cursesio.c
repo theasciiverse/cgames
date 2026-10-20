@@ -380,8 +380,7 @@ static void selectrepresentation(void)
     attr_t	attr;
 
     if (has_colors()) {
-	int	pair;
-	short	frgnd, bkgnd;
+	short	pair, frgnd, bkgnd;
 
 	start_color();
 	attr_get(&attr, &pair, NULL);

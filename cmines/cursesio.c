@@ -390,13 +390,13 @@ int ioinitialize(int updatetimerflag, int showsmileysflag, int silenceflag,
 #endif
 
     if (has_colors()) {
-	short	bkgnd;
+	short	pair, bkgnd;
 	short	numbercolors[] = { 0, COLOR_BLUE, COLOR_GREEN, COLOR_RED,
 				   COLOR_MAGENTA, COLOR_YELLOW, COLOR_CYAN };
 
 	start_color();
-	attr_get(&attr, &n, NULL);
-	pair_content(n, &numbercolors[0], &bkgnd);
+	attr_get(&attr, &pair, NULL);
+	pair_content(pair, &numbercolors[0], &bkgnd);
 	numbercell[0] = ' ' | A_NORMAL;
 	for (n = 1 ; n <= 6 ; ++n) {
 	    init_pair(n, numbercolors[n], bkgnd);
