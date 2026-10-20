@@ -85,7 +85,11 @@ int finddir(char const *dir)
 {
     struct stat	st;
 
+#ifdef _WIN32
+    return stat(dir, &st) ? mkdir(dir) == 0 : S_ISDIR(st.st_mode);
+#else
     return stat(dir, &st) ? mkdir(dir, 0755) == 0 : S_ISDIR(st.st_mode);
+#endif
 }
 
 /* Open a file, using dir as the directory if filename is not a path.

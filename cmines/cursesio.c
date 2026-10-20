@@ -8,7 +8,11 @@
 #include	<ctype.h>
 #include	<errno.h>
 #include	<unistd.h>
+#ifdef _WIN32
+#include	<curses.h>
+#else
 #include	<ncurses.h>
+#endif
 #include	"cmines.h"
 #include	"userio.h"
 

@@ -10,7 +10,11 @@
 #include	<ctype.h>
 #include	<signal.h>
 #include	<errno.h>
+#ifdef _WIN32
+#include	<curses.h>
+#else
 #include	<ncurses.h>
+#endif
 #include	<unistd.h>
 #include	"gen.h"
 #include	"cblocks.h"

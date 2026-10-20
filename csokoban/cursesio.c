@@ -9,7 +9,11 @@
 #include	<string.h>
 #include	<ctype.h>
 #include	<errno.h>
+#ifdef _WIN32
+#include	<curses.h>
+#else
 #include	<ncurses.h>
+#endif
 #include	<unistd.h>
 #include	"gen.h"
 #include	"csokoban.h"
