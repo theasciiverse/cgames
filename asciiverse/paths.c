@@ -13,6 +13,7 @@
 #ifdef _WIN32
 #include	<windows.h>
 #elif defined(__APPLE__)
+#include	<stdint.h>
 #include	<mach-o/dyld.h>
 #else
 #include	<unistd.h>

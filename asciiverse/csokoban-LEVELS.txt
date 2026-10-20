@@ -1,0 +1,33 @@
+The levels in series/
+
+All 1,043 levels shipped with this csokoban are by David W. Skinner,
+from his fifteen finished sets:
+
+  microban-1     Microban           155 levels   April 2000
+  microban-2     Mas Microban       135 levels   April 2002
+  microban-3     Microban III       101 levels
+  microban-4     Microban IV        102 levels
+  sasquatch-01   Sasquatch           50 levels   January 1999
+  sasquatch-02   Mas Sasquatch       50 levels   August 1999
+  sasquatch-03   Sasquatch III       50 levels   June 2000
+  sasquatch-04   Sasquatch IV        50 levels   March 2001
+  sasquatch-05   Sasquatch V         50 levels   December 2001
+  sasquatch-06   Sasquatch VI        50 levels   October 2002
+  sasquatch-07   Sasquatch VII       50 levels   June 2004
+  sasquatch-08   Sasquatch VIII      50 levels   March 2008
+  sasquatch-09   Sasquatch IX        50 levels
+  sasquatch-10   Sasquatch X         50 levels
+  sasquatch-11   Sasquatch XI        50 levels
+
+Puzzles by David W. Skinner <sasquatch@bentonrea.com>. His page
+(users.bentonrea.com/~sasquatch/sokoban/, now only in the Internet
+Archive) said: "These sets may be freely distributed provided they
+remain properly credited." The files are his, with Unix line endings
+and a header naming the set and crediting him.
+
+Microban is a good place to start: small puzzles, each showing one
+idea. The Sasquatch sets range from medium to very hard. Some of the
+later puzzles are large (up to 49 by 44); csokoban says how big a
+terminal they need, and plays them once it is that big.
+
+Start a set with its name, for example: csokoban sasquatch-03
