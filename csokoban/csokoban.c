@@ -307,8 +307,27 @@ static void playgame(void)
     for (n = 0 ; n < currentseries ; ++n)
 	index += serieslist[n].count;
     index += currentgame;
+    n = 0;
 
-    if (drawscreen(index)) {
+    /* A level too big for the terminal: wait for the terminal to be
+     * made bigger (a resize comes as Ctrl-L), or for another level.
+     */
+    while (!drawscreen(index)) {
+	switch (input()) {
+	  case 'N':	case '\n':	n = +1;		break;
+	  case 'P':			n = -1;		break;
+	  case 'q':	case 'Q':	exit(0);
+	  default:			continue;
+	}
+	currentgame += n;
+	if (readlevel())
+	    return;
+	currentgame -= n;
+	n = 0;
+	ding();
+    }
+
+    {
 	do {
 	    if ((n = doturn())) {
 		currentgame += n;

@@ -183,6 +183,10 @@ int displaygame(cell const *map, int ysize, int xsize,
 
     if (!placegame(ysize - 2, (xsize - 2) * 2)) {
 	mvprintw(0, 0, "Level %d won't fit on the screen.", index);
+	mvprintw(1, 0, "It needs %d columns and %d rows; this terminal has"
+		       " %d and %d.", (xsize - 2) * 2 + 1, ysize - 2, COLS, LINES);
+	mvprintw(3, 0, "Make the terminal bigger to play it, or press N"
+		       " (next level), P (previous) or q.");
 	refresh();
 	return FALSE;
     }
@@ -331,7 +335,11 @@ int input(void)
 	    resize_term(0, 0);
 #endif
 	    redrawresized();
-	    continue;
+	    /* the game draws itself again on Ctrl-L (and tries a level
+	     * that did not fit); the help stays on the screen */
+	    if (showing == SHOWING_HELP)
+		continue;
+	    return '\f';
 #endif
 	  case KEY_UP:		return 'k';
 	  case KEY_DOWN:	return 'j';
