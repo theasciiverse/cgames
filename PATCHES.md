@@ -114,7 +114,8 @@ Brian Raiter's own file, unchanged.
   under asciinema in a 100x30 tmux pane while its driver plays, then
   stops it so the cast ends on the game. csokoban.py solves Microban's
   levels by breadth-first search; cmines.py plays as a careful player
-  (the take kept ends on a won Intermediate game, a best time of 40 s);
+  (the take kept ends on a won Intermediate game, a best time of 46 s,
+  as the game itself recorded);
   cblocks.py solves the Classic puzzles and selects blocks with the
   arrow keys.
 

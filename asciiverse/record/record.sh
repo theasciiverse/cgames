@@ -8,7 +8,8 @@
 # PATH, with a throwaway home, in a detached 100x30 tmux session, while
 # asciiverse/record/GAME.py plays it through the pane. Then the game is
 # stopped with SIGKILL, so it draws nothing more (its own exit clears
-# the screen), and the cast ends on the game. Writes asciiverse/GAME.cast.
+# the screen), and the cast ends on the game, its last frame held for two
+# seconds. Writes asciiverse/GAME.cast.
 set -eu
 cd "$(dirname "$0")/../.."
 game=$1
@@ -17,7 +18,8 @@ shift 2
 out=$PWD/asciiverse/$game.cast
 S=$game-preview-$$
 home=$(mktemp -d)
-trap 'tmux -L "$S" kill-server 2>/dev/null; rm -rf "$home"' EXIT
+# KEEP_HOME=1 keeps the throwaway home (the game's files) to look at
+trap 'tmux -L "$S" kill-server 2>/dev/null; if [ -n "${KEEP_HOME:-}" ]; then echo "home kept: $home"; else rm -rf "$home"; fi' EXIT
 mkdir "$home/bin"
 cp -r "$src"/. "$home/bin/"
 tmux -L "$S" new-session -d -s "$S" -x 100 -y 30 -c "$home" \
@@ -47,6 +49,8 @@ for line in lines[1:]:
     if ev[1] == "x" or (ev[1] == "o" and "\x1b[?1049l" in ev[2]):
         break
     keep.append(line)
+# hold the last frame for two seconds before the preview loops
+keep.append(json.dumps([2.0, "o", ""]))
 open(sys.argv[1], "w").write("\n".join(keep) + "\n")
 PY
 echo "recorded $out"
