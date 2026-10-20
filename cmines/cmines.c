@@ -249,7 +249,7 @@ static void makenewfield(int except)
 	    if (pos != except)
 		deck[n++] = pos;
     while (--n) {
-	m = (int)((rand() * (double)(n + 1)) / (double)RAND_MAX);
+	m = (int)((rand() * (double)(n + 1)) / ((double)RAND_MAX + 1.0));
 	pos = deck[n];
 	deck[n] = deck[m];
 	deck[m] = pos;
