@@ -60,6 +60,24 @@ static int		silence = FALSE;
  */
 char const	       *programname = "";
 
+/* The screen row and column of the field's top left corner (its
+ * frame), worked out at each drawing so that the field and its counter
+ * and timer are centred together.
+ */
+static int		oy, ox;
+
+/* The size of the field last drawn, to ignore clicks outside it.
+ */
+static int		fieldrows, fieldcols;
+
+/* TRUE while the help is on the screen, with what it shows, to draw it
+ * again when the terminal is resized.
+ */
+static int		showinghelp = FALSE;
+static int		lastkeycount, lastsetupcount;
+static char const     **lastkeys, **lastsetups;
+static int	       *lastbesttimes;
+
 /*
  * Timer functions
  */
@@ -118,9 +136,9 @@ static void displaytimer(void)
 
     if (starttime > 0)
 	timer = time(NULL) - starttime;
-    if (timer > 0) {
+    if (timer > 0 && !showinghelp) {
 	getyx(stdscr, y, x);
-	mvprintw(0, timercolumn, "%7d", timer);
+	mvprintw(oy, timercolumn, "%7d", timer);
 	move(y, x);
     }
     refresh();
@@ -137,30 +155,41 @@ void displaygame(cell const *field, int ysize, int xsize,
     chtype	ch;
     int		y, x;
 
-    erase();
+    int		w;
 
-    if (ysize + 2 > lastline ||
-			xsize * 2 + (showsmileys ? 11 : 7) > timercolumn) {
+    showinghelp = FALSE;
+    erase();
+    measurescreen();
+
+    /* the field's frame, then the counter, emoticon and timer */
+    w = xsize * 2 + 3 + 5 + (showsmileys ? 3 : 0) + 1 + 7;
+    if (ysize + 2 > lastline + 1 || w > COLS) {
+	oy = ox = 0;
 	mvaddstr(0, 0, "The screen is too small to show the game.");
 	refresh();
 	return;
     }
+    oy = (lastline + 1 - (ysize + 2)) / 2;
+    ox = (COLS - w) / 2;
+    fieldrows = ysize;
+    fieldcols = xsize;
+    timercolumn = ox + w - 7;
 
-    mvaddch(0, 0, ACS_ULCORNER);
-    mvaddch(0, 1, ACS_HLINE);
-    mvaddch(0, xsize * 2 + 2, ACS_URCORNER);
-    mvaddch(ysize + 1, 0, ACS_LLCORNER);
-    mvaddch(ysize + 1, 1, ACS_HLINE);
-    mvaddch(ysize + 1, xsize * 2 + 2, ACS_LRCORNER);
+    mvaddch(oy + 0, ox + 0, ACS_ULCORNER);
+    mvaddch(oy + 0, ox + 1, ACS_HLINE);
+    mvaddch(oy + 0, ox + xsize * 2 + 2, ACS_URCORNER);
+    mvaddch(oy + ysize + 1, ox + 0, ACS_LLCORNER);
+    mvaddch(oy + ysize + 1, ox + 1, ACS_HLINE);
+    mvaddch(oy + ysize + 1, ox + xsize * 2 + 2, ACS_LRCORNER);
     for (x = 0 ; x < xsize ; ++x) {
-	mvaddch(0, x * 2 + 2, ACS_HLINE);
-	mvaddch(0, x * 2 + 3, ACS_HLINE);
-	mvaddch(ysize + 1, x * 2 + 2, ACS_HLINE);
-	mvaddch(ysize + 1, x * 2 + 3, ACS_HLINE);
+	mvaddch(oy + 0, ox + x * 2 + 2, ACS_HLINE);
+	mvaddch(oy + 0, ox + x * 2 + 3, ACS_HLINE);
+	mvaddch(oy + ysize + 1, ox + x * 2 + 2, ACS_HLINE);
+	mvaddch(oy + ysize + 1, ox + x * 2 + 3, ACS_HLINE);
     }
     for (y = 0, p = field ; y < ysize ; ++y, p += XSIZE) {
-	mvaddch(y + 1, 0, ACS_VLINE);
-	mvaddch(y + 1, xsize * 2 + 2, ACS_VLINE);
+	mvaddch(oy + y + 1, ox + 0, ACS_VLINE);
+	mvaddch(oy + y + 1, ox + xsize * 2 + 2, ACS_VLINE);
 	for (x = 0 ; x < xsize ; ++x) {
 	    if (p[x] & MINED) {
 		if (p[x] & FLAGGED)
@@ -176,15 +205,15 @@ void displaygame(cell const *field, int ysize, int xsize,
 		ch = numbercell[ch];
 	    } else
 		ch = coveredcell;
-	    mvaddch(y + 1, x * 2 + 2, ch);
+	    mvaddch(oy + y + 1, ox + x * 2 + 2, ch);
 	}
     }
 
-    mvprintw(0, xsize * 2 + 4, "%-4d", minecount - flagcount);
+    mvprintw(oy, ox + xsize * 2 + 4, "%-4d", minecount - flagcount);
     if (showsmileys && status != status_ignore)
 	addstr(smiley[status]);
 
-    move(ysize + 1, xsize * 2 + 4);
+    move(oy + ysize + 1, ox + xsize * 2 + 4);
     displaytimer();
 }
 
@@ -217,29 +246,40 @@ void displayhelp(int keycount, char const *keys[],
 	    descwidth = n;
     }
 
+    showinghelp = TRUE;
+    lastkeycount = keycount;
+    lastkeys = keys;
+    lastsetupcount = setupcount;
+    lastsetups = setups;
+    lastbesttimes = besttimes;
+
     erase();
-    move(0, 0);
+    measurescreen();
+    /* the help, centred */
+    oy = (lastline + 1 - (keycount + setupcount + 3)) / 2;
+    ox = (COLS - (keywidth + descwidth + 16)) / 2;
+    if (oy < 0)
+	oy = 0;
+    if (ox < 0)
+	ox = 0;
     for (i = 0 ; i < keycount ; ++i) {
 	n = strlen(keys[i]);
-	printw("%-*s  %-*s", keywidth, keys[i],
-			     descwidth, keys[i] + n + 1);
+	mvprintw(oy + i, ox, "%-*s  %-*s", keywidth, keys[i],
+				  descwidth, keys[i] + n + 1);
 	if (i == keycount - 1)
 	    addstr("    Best Times");
-	addch('\n');
     }
-    move(i, keywidth + descwidth + 6);
+    move(oy + i, ox + keywidth + descwidth + 6);
     for (i = 0 ; i < 10 ; ++i)
 	addch(ACS_HLINE);
-    addch('\n');
     for (i = 0 ; i < setupcount ; ++i) {
 	n = strlen(setups[i]);
-	printw("%-*c  %-*s", keywidth, tolower(setups[i][0]),
-			     descwidth, setups[i]);
+	mvprintw(oy + keycount + 1 + i, ox, "%-*c  %-*s", keywidth,
+		 tolower(setups[i][0]), descwidth, setups[i]);
 	if (besttimes[i])
 	    printw("%14d", besttimes[i]);
-	addch('\n');
     }
-    mvaddstr(lastline, 0, "Press any key to return.");
+    mvaddstr(oy + keycount + setupcount + 2, ox, "Press any key to return.");
     refresh();
 }
 
@@ -252,8 +292,8 @@ void setcursorpos(int pos)
     if (pos >= 0) {
 	y = pos / XSIZE;
 	x = pos - y * XSIZE;
-	y = y + 1;
-	x = x * 2 + 2;
+	y = oy + y + 1;
+	x = ox + x * 2 + 2;
 	if (y <= lastline && x <= timercolumn) {
 	    move(y, x);
 	    refresh();
@@ -282,7 +322,11 @@ static int mousehandler(void)
 
     if (getmouse(&event) != OK)
 	return 0;
-    if (!allowoffclicks && (event.x & 1))
+    if (event.y < oy + 1 || event.x < ox + 2
+			  || event.y > oy + fieldrows
+			  || (event.x - ox - 2) / 2 >= fieldcols)
+	return 0;
+    if (!allowoffclicks && ((event.x - ox) & 1))
 	return 0;
 
     switch (event.bstate) {
@@ -302,7 +346,7 @@ static int mousehandler(void)
 	return 0;
     }
 
-    pos = (event.y - 1) * XSIZE + (event.x - 2) / 2;
+    pos = (event.y - oy - 1) * XSIZE + (event.x - ox - 2) / 2;
     key = mousecallback(pos, -mstate);
     if (!key || key == '\f')
 	key = mousecallback(pos, mstate);
@@ -334,6 +378,19 @@ int input(void)
 	  case '\f':
 	    clearok(stdscr, TRUE);
 	    return key;
+#ifdef KEY_RESIZE
+	  case KEY_RESIZE:
+	    /* the game draws itself again on Ctrl-L; the help is drawn
+	     * again here, to stay on the screen */
+#ifdef PDCURSES
+	    resize_term(0, 0);
+#endif
+	    if (!showinghelp)
+		return '\f';
+	    displayhelp(lastkeycount, lastkeys, lastsetupcount,
+			lastsetups, lastbesttimes);
+	    break;
+#endif
 	  case KEY_MOUSE:
 	    if ((key = mousehandler()))
 		return key;
