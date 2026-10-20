@@ -9,8 +9,8 @@
 
 /* The maximum dimensions of a puzzle.
  */
-#define	MAXWIDTH	32
-#define	MAXHEIGHT	32
+#define	MAXWIDTH	64
+#define	MAXHEIGHT	64
 
 /* The width of one row in a map array.
  */
