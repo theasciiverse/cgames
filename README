@@ -1,3 +1,21 @@
+Play it with Asciiverse
+=======================
+
+With av, the Asciiverse client (https://asciiverse.sh):
+
+Each game installs on its own:
+
+    cblocks   av install cblocks         ./cblocks
+    cmines    av install cmines          ./cmines
+    csokoban  av install csokoban        ./csokoban
+
+Start one with av play <name>, or download its archive for your system
+from this repository's Releases and run it from there (.exe on Windows).
+
+The original README follows.
+
+------------------------------------------------------------------------
+
 The programs in this distribution are re-implementations of games for
 the Linux console.
 

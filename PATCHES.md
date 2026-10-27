@@ -131,3 +131,9 @@ found beside the program, cmines' setups saved in `%APPDATA%`); Wine's
 console shows the line drawing as question marks with either PDCurses
 build, so the drawing on real Windows is unchecked. macOS: not built
 here.
+
+## Ours
+
+- **How to play it, at the top of README.** A short note on installing and
+  starting it with av, or from a release archive; the original text follows
+  unchanged.
