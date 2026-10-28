@@ -9,8 +9,7 @@ Each game installs on its own:
     cmines    av install cmines          ./cmines
     csokoban  av install csokoban        ./csokoban
 
-Start one with av play <name>, or download its archive for your system
-from this repository's Releases and run it from there (.exe on Windows).
+Start one with av play <name>.
 
 The original README follows.
 
